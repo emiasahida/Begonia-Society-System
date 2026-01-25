@@ -160,14 +160,14 @@ export default function AdminPhotos() {
               <div className="grid gap-2">
                 <Label htmlFor="species">対象種（未確定の場合は空欄可）</Label>
                 <Select
-                  value={selectedSpeciesId}
-                  onValueChange={setSelectedSpeciesId}
+                  value={selectedSpeciesId || "none"}
+                  onValueChange={(val) => setSelectedSpeciesId(val === "none" ? "" : val)}
                 >
                   <SelectTrigger data-testid="select-species">
                     <SelectValue placeholder="種を選択..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">未確定</SelectItem>
+                    <SelectItem value="none">未確定</SelectItem>
                     {speciesList?.data?.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.scientificName}
