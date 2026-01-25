@@ -1,4 +1,8 @@
 import { Link, useLocation } from "wouter";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { 
   BookOpen, 
   Search, 
@@ -8,7 +12,8 @@ import {
   Image,
   FileText,
   Home,
-  LogOut
+  LogOut,
+  Pencil
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,8 +29,33 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { Member } from "@shared/schema";
+
+const displayNameSchema = z.object({
+  displayName: z.string().min(1, "表示名は必須です").max(100, "表示名は100文字以内で入力してください"),
+});
 
 interface AppSidebarProps {
   member?: Member | null;
@@ -34,9 +64,42 @@ interface AppSidebarProps {
 export function AppSidebar({ member }: AppSidebarProps) {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [editOpen, setEditOpen] = useState(false);
   
   const role = member?.role || "member";
   const displayName = member?.displayName || user?.firstName || "会員";
+  
+  const form = useForm<z.infer<typeof displayNameSchema>>({
+    resolver: zodResolver(displayNameSchema),
+    defaultValues: {
+      displayName: displayName,
+    },
+  });
+  
+  const updateDisplayName = useMutation({
+    mutationFn: async (data: z.infer<typeof displayNameSchema>) => {
+      const res = await apiRequest("PATCH", "/api/me", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/me"] });
+      toast({ title: "表示名を更新しました" });
+      setEditOpen(false);
+    },
+    onError: () => {
+      toast({ title: "更新に失敗しました", variant: "destructive" });
+    },
+  });
+  
+  const handleEditOpen = () => {
+    form.reset({ displayName });
+    setEditOpen(true);
+  };
+  
+  const onSubmit = (data: z.infer<typeof displayNameSchema>) => {
+    updateDisplayName.mutate(data);
+  };
 
   const memberItems = [
     { title: "ホーム", url: "/", icon: Home },
@@ -142,9 +205,70 @@ export function AppSidebar({ member }: AppSidebarProps) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">
-              {displayName}
-            </p>
+            <div className="flex items-center gap-1">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                {displayName}
+              </p>
+              <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="px-1"
+                    onClick={handleEditOpen}
+                    data-testid="button-edit-display-name"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>表示名を変更</DialogTitle>
+                    <DialogDescription>
+                      他の会員に表示される名前を変更できます
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="displayName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>表示名</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="表示名を入力"
+                                data-testid="input-display-name"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setEditOpen(false)}
+                          data-testid="button-cancel-edit"
+                        >
+                          キャンセル
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={updateDisplayName.isPending}
+                          data-testid="button-save-display-name"
+                        >
+                          {updateDisplayName.isPending ? "保存中..." : "保存"}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
             <p className="text-xs text-muted-foreground">
               {role === "admin" ? "管理者" : role === "reviewer" ? "理事" : "会員"}
             </p>

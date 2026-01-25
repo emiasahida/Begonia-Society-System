@@ -107,6 +107,42 @@ export async function registerRoutes(
     }
   });
 
+  // Update own display name
+  app.patch("/api/me", isAuthenticated, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.claims?.sub) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const member = await storage.getMemberByUserId(user.claims.sub);
+      if (!member) {
+        return res.status(404).json({ message: "Member not found" });
+      }
+      
+      const updateSchema = z.object({
+        displayName: z.string().min(1, "表示名は必須です").max(100),
+      });
+      
+      const parsed = updateSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ 
+          message: "Invalid input",
+          errors: parsed.error.errors 
+        });
+      }
+      
+      const updated = await storage.updateMember(member.id, {
+        displayName: parsed.data.displayName,
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   // ===== Species API =====
   app.get("/api/species", isAuthenticated, async (req, res) => {
     try {
