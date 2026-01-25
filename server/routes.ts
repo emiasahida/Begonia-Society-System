@@ -14,7 +14,7 @@ const createMemberSchema = z.object({
   memberNumber: z.string().optional(),
   displayName: z.string().min(1),
   role: z.enum(["member", "admin", "reviewer"]).default("member"),
-  status: z.enum(["active", "inactive", "suspended"]).default("active"),
+  status: z.enum(["pending", "active", "inactive", "suspended"]).default("pending"),
 });
 
 const updateMemberSchema = createMemberSchema.partial();
@@ -90,13 +90,13 @@ export async function registerRoutes(
       
       let member = await storage.getMemberByUserId(user.claims.sub);
       
-      // Auto-create member if not exists
+      // Auto-create member if not exists (pending approval)
       if (!member) {
         member = await storage.createMember({
           userId: user.claims.sub,
           displayName: user.claims.first_name || user.claims.email || "会員",
           role: "member",
-          status: "active",
+          status: "pending",
         });
       }
       

@@ -12,7 +12,7 @@ export * from "./models/auth";
 export const userRoles = ["member", "admin", "reviewer"] as const;
 export type UserRole = typeof userRoles[number];
 
-export const memberStatuses = ["active", "inactive", "suspended"] as const;
+export const memberStatuses = ["pending", "active", "inactive", "suspended"] as const;
 export type MemberStatus = typeof memberStatuses[number];
 
 export const submissionStatuses = ["submitted", "approved", "rejected"] as const;
@@ -41,7 +41,7 @@ export const members = pgTable("members", {
   memberNumber: varchar("member_number").unique(),
   displayName: varchar("display_name"),
   role: varchar("role").$type<UserRole>().default("member").notNull(),
-  status: varchar("status").$type<MemberStatus>().default("active").notNull(),
+  status: varchar("status").$type<MemberStatus>().default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

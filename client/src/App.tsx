@@ -18,6 +18,7 @@ import AdminSpecies from "@/pages/admin/species";
 import AdminMembers from "@/pages/admin/members";
 import AdminPhotos from "@/pages/admin/photos";
 import Review from "@/pages/review";
+import Pending from "@/pages/pending";
 import NotFound from "@/pages/not-found";
 import type { Member } from "@shared/schema";
 
@@ -43,6 +44,28 @@ function AuthenticatedApp() {
 
   if (!user) {
     return <Landing />;
+  }
+
+  // Wait for member data to load
+  if (memberLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Skeleton className="w-12 h-12 rounded-full mx-auto" />
+          <Skeleton className="w-32 h-4 mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show pending page for unapproved members
+  if (member?.status === "pending") {
+    return <Pending />;
+  }
+
+  // Block inactive/suspended members
+  if (member && member.status !== "active") {
+    return <Pending />;
   }
 
   const role = member?.role || "member";

@@ -23,7 +23,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Plus, Search, Users, Pencil, Loader2 } from "lucide-react";
+import { Plus, Search, Users, Pencil, Loader2, CheckCircle, XCircle, Clock } from "lucide-react";
 import type { Member, InsertMember, UserRole, MemberStatus } from "@shared/schema";
 
 export default function AdminMembers() {
@@ -79,16 +79,21 @@ export default function AdminMembers() {
   };
 
   const statusLabels: Record<MemberStatus, string> = {
+    pending: "承認待ち",
     active: "有効",
     inactive: "無効",
     suspended: "停止",
   };
 
   const statusColors: Record<MemberStatus, string> = {
+    pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
     active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
     inactive: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
     suspended: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
   };
+
+  const pendingMembers = members?.filter(m => m.status === "pending") || [];
+  const activeMembers = members?.filter(m => m.status !== "pending") || [];
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -130,15 +135,62 @@ export default function AdminMembers() {
         />
       </div>
 
+      {pendingMembers.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+            <Clock className="w-5 h-5" />
+            承認待ち ({pendingMembers.length}件)
+          </h2>
+          {pendingMembers.map((member) => (
+            <Card key={member.id} className="p-4 border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-foreground">
+                      {member.displayName || "名称未設定"}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[member.status]}`}>
+                      {statusLabels[member.status]}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => updateMutation.mutate({ id: member.id, data: { status: "active" } })}
+                    disabled={updateMutation.isPending}
+                    data-testid={`button-approve-member-${member.id}`}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    承認
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateMutation.mutate({ id: member.id, data: { status: "suspended" } })}
+                    disabled={updateMutation.isPending}
+                    data-testid={`button-reject-member-${member.id}`}
+                  >
+                    <XCircle className="w-4 h-4 mr-1" />
+                    却下
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-2">
+        <h2 className="text-lg font-semibold">会員一覧</h2>
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} className="p-4">
               <Skeleton className="h-6 w-2/3" />
             </Card>
           ))
-        ) : members && members.length > 0 ? (
-          members.map((member) => (
+        ) : activeMembers.length > 0 ? (
+          activeMembers.map((member) => (
             <Card key={member.id} className="p-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
@@ -262,6 +314,7 @@ function MemberForm({ member, onSubmit, isPending, onCancel }: MemberFormProps) 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="pending">承認待ち</SelectItem>
               <SelectItem value="active">有効</SelectItem>
               <SelectItem value="inactive">無効</SelectItem>
               <SelectItem value="suspended">停止</SelectItem>
