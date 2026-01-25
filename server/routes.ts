@@ -265,20 +265,19 @@ export async function registerRoutes(
 
       for (const line of dataLines) {
         const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
-        // CSV format based on the attached file structure
-        // Column mapping: 品種名(11), 交配親・産地(12), 分類(13), 花色(14), 作出命名者(15), 所属・Sec/原種(16), 発表見/掲載(17), 読み(18)
-        const scientificName = cols[11]?.trim();
+        // CSV format: 出典(0), 品種名(1), 交配親・産地(2), 分類(3), 花色(4), 作出命名者(5), 所属・Sec/原種(6), 発表見/掲載(7), 読み(8), 掲載(9)
+        const scientificName = cols[1]?.trim();
         if (!scientificName) continue;
 
         try {
           await storage.createSpecies({
             scientificName,
-            notes: cols[12] || null,
-            classification: cols[13] || null,
-            flowerColor: cols[14] || null,
-            authorName: cols[15] || null,
-            origin: `${cols[16] || ""} ${cols[17] || ""}`.trim() || null,
-            japaneseName: cols[18] || null,
+            notes: cols[2] || null,
+            classification: cols[3] || null,
+            flowerColor: cols[4] || null,
+            authorName: cols[5] || null,
+            origin: [cols[0], cols[6], cols[7], cols[9]].filter(Boolean).join(" ").trim() || null,
+            japaneseName: cols[8] || null,
           });
           imported++;
         } catch (e) {
