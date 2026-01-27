@@ -391,10 +391,11 @@ export async function registerRoutes(
       }
       const { speciesId, credit } = validationResult.data;
 
-      // Move file to uploads directory
+      // Move file to uploads directory (use copy+unlink for cross-device compatibility)
       const fileKey = `${randomUUID()}-${req.file.originalname}`;
       const destPath = path.join(UPLOADS_DIR, fileKey);
-      fs.renameSync(req.file.path, destPath);
+      fs.copyFileSync(req.file.path, destPath);
+      fs.unlinkSync(req.file.path);
 
       const memberId = (req as any).member.id;
 
