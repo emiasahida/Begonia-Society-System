@@ -14,15 +14,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Camera, Loader2, Image, Trash2 } from "lucide-react";
+import { Upload, Camera, Loader2, Image, Trash2, Search, X, Check, ChevronsUpDown } from "lucide-react";
 import type { Species, Photo, PhotoSubmission } from "@shared/schema";
 
 export default function AdminPhotos() {
@@ -31,8 +29,11 @@ export default function AdminPhotos() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedSpeciesId, setSelectedSpeciesId] = useState<string>("");
+  const [selectedSpeciesName, setSelectedSpeciesName] = useState<string>("");
   const [credit, setCredit] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [speciesSearchOpen, setSpeciesSearchOpen] = useState(false);
+  const [speciesSearchQuery, setSpeciesSearchQuery] = useState("");
 
   const { data: photos, isLoading: photosLoading } = useQuery<Photo[]>({
     queryKey: ["/api/admin/photos"],
@@ -42,13 +43,14 @@ export default function AdminPhotos() {
     queryKey: ["/api/admin/submissions/pending"],
   });
 
-  const { data: speciesList } = useQuery<{ data: Species[] }>({
-    queryKey: ["/api/species", { limit: 1000 }],
+  const { data: speciesSearchResults, isLoading: speciesSearchLoading } = useQuery<{ data: Species[] }>({
+    queryKey: ["/api/species", { q: speciesSearchQuery }],
     queryFn: async () => {
-      const res = await fetch("/api/species?limit=1000");
+      const res = await fetch(`/api/species?q=${encodeURIComponent(speciesSearchQuery)}&limit=50`);
       if (!res.ok) throw new Error("Failed to fetch species");
       return res.json();
     },
+    enabled: speciesSearchQuery.length >= 2,
   });
 
   const uploadMutation = useMutation({
@@ -66,6 +68,8 @@ export default function AdminPhotos() {
       setIsUploadDialogOpen(false);
       setSelectedFile(null);
       setSelectedSpeciesId("");
+      setSelectedSpeciesName("");
+      setSpeciesSearchQuery("");
       setCredit("");
       toast({ title: "写真を登録しました" });
     },
@@ -159,22 +163,85 @@ export default function AdminPhotos() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="species">対象種（未確定の場合は空欄可）</Label>
-                <Select
-                  value={selectedSpeciesId || "none"}
-                  onValueChange={(val) => setSelectedSpeciesId(val === "none" ? "" : val)}
-                >
-                  <SelectTrigger data-testid="select-species">
-                    <SelectValue placeholder="種を選択..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">未確定</SelectItem>
-                    {speciesList?.data?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.scientificName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={speciesSearchOpen} onOpenChange={setSpeciesSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={speciesSearchOpen}
+                      className="justify-between font-normal"
+                      data-testid="select-species"
+                    >
+                      {selectedSpeciesName || "種を検索して選択..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <div className="p-2 border-b">
+                      <div className="flex items-center gap-2">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="学名または和名で検索..."
+                          value={speciesSearchQuery}
+                          onChange={(e) => setSpeciesSearchQuery(e.target.value)}
+                          className="h-8 border-0 focus-visible:ring-0"
+                          data-testid="input-species-search"
+                        />
+                        {selectedSpeciesId && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6"
+                            onClick={() => {
+                              setSelectedSpeciesId("");
+                              setSelectedSpeciesName("");
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {speciesSearchQuery.length < 2 ? (
+                        <div className="p-4 text-sm text-muted-foreground text-center">
+                          2文字以上入力して検索
+                        </div>
+                      ) : speciesSearchLoading ? (
+                        <div className="p-4 text-sm text-muted-foreground text-center">
+                          検索中...
+                        </div>
+                      ) : speciesSearchResults?.data?.length === 0 ? (
+                        <div className="p-4 text-sm text-muted-foreground text-center">
+                          該当する種が見つかりません
+                        </div>
+                      ) : (
+                        speciesSearchResults?.data?.map((s) => (
+                          <button
+                            key={s.id}
+                            className="w-full px-4 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
+                            onClick={() => {
+                              setSelectedSpeciesId(s.id);
+                              setSelectedSpeciesName(s.scientificName);
+                              setSpeciesSearchOpen(false);
+                            }}
+                            data-testid={`species-option-${s.id}`}
+                          >
+                            {selectedSpeciesId === s.id && (
+                              <Check className="h-4 w-4 text-primary" />
+                            )}
+                            <div className="flex-1">
+                              <div>{s.scientificName}</div>
+                              {s.japaneseName && (
+                                <div className="text-xs text-muted-foreground">{s.japaneseName}</div>
+                              )}
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="credit">クレジット表示 *</Label>
