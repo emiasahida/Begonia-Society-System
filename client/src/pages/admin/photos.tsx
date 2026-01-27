@@ -162,7 +162,7 @@ export default function AdminPhotos() {
                 </Button>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="species">対象種（未確定の場合は空欄可）</Label>
+                <Label htmlFor="species">対象種 *</Label>
                 <Popover open={speciesSearchOpen} onOpenChange={setSpeciesSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -264,7 +264,7 @@ export default function AdminPhotos() {
               </Button>
               <Button
                 onClick={handleUpload}
-                disabled={!selectedFile || !credit || uploadMutation.isPending}
+                disabled={!selectedFile || !credit || !selectedSpeciesId || uploadMutation.isPending}
                 data-testid="button-submit-photo"
               >
                 {uploadMutation.isPending ? (
