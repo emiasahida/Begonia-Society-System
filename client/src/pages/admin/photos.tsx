@@ -30,6 +30,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, Camera, Loader2, Image, Trash2, Search, X, Check, ChevronsUpDown } from "lucide-react";
 import type { Species, Photo, PhotoSubmission } from "@shared/schema";
 
+type PhotoWithSpecies = Photo & { species?: { scientificName: string; japaneseName: string | null } };
+
 export default function AdminPhotos() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -42,9 +44,9 @@ export default function AdminPhotos() {
   const [speciesSearchOpen, setSpeciesSearchOpen] = useState(false);
   const [speciesSearchQuery, setSpeciesSearchQuery] = useState("");
   const [classificationFilter, setClassificationFilter] = useState("");
-  const [viewingPhoto, setViewingPhoto] = useState<Photo | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<PhotoWithSpecies | null>(null);
 
-  const { data: photos, isLoading: photosLoading } = useQuery<Photo[]>({
+  const { data: photos, isLoading: photosLoading } = useQuery<PhotoWithSpecies[]>({
     queryKey: ["/api/admin/photos"],
   });
 
@@ -360,8 +362,11 @@ export default function AdminPhotos() {
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                  <p className="text-xs text-white/90 truncate">{photo.credit}</p>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                  {photo.species && (
+                    <p className="text-xs text-white font-medium truncate">{photo.species.scientificName}</p>
+                  )}
+                  <p className="text-xs text-white/80 truncate">{photo.credit}</p>
                 </div>
               </div>
             ))}
@@ -385,7 +390,15 @@ export default function AdminPhotos() {
                   className="w-full h-auto max-h-[80vh] object-contain"
                 />
               </div>
-              <div className="p-4 bg-background">
+              <div className="p-4 bg-background space-y-1">
+                {viewingPhoto.species && (
+                  <p className="text-sm font-medium">
+                    {viewingPhoto.species.scientificName}
+                    {viewingPhoto.species.japaneseName && (
+                      <span className="text-muted-foreground ml-2">({viewingPhoto.species.japaneseName})</span>
+                    )}
+                  </p>
+                )}
                 <p className="text-sm text-muted-foreground">
                   クレジット: {viewingPhoto.credit}
                 </p>

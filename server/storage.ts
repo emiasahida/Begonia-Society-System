@@ -184,8 +184,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Photos
-  async getPhotos(): Promise<Photo[]> {
-    return db.select().from(photos).orderBy(desc(photos.createdAt));
+  async getPhotos(): Promise<(Photo & { species?: { scientificName: string; japaneseName: string | null } })[]> {
+    const results = await db
+      .select({
+        id: photos.id,
+        speciesId: photos.speciesId,
+        memberId: photos.memberId,
+        fileKey: photos.fileKey,
+        credit: photos.credit,
+        createdAt: photos.createdAt,
+        updatedAt: photos.updatedAt,
+        speciesName: species.scientificName,
+        speciesJapaneseName: species.japaneseName,
+      })
+      .from(photos)
+      .leftJoin(species, eq(photos.speciesId, species.id))
+      .orderBy(desc(photos.createdAt));
+    
+    return results.map(r => ({
+      id: r.id,
+      speciesId: r.speciesId,
+      memberId: r.memberId,
+      fileKey: r.fileKey,
+      credit: r.credit,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      species: r.speciesName ? { scientificName: r.speciesName, japaneseName: r.speciesJapaneseName } : undefined,
+    }));
   }
 
   async getPhotosBySpeciesId(speciesId: string): Promise<Photo[]> {
