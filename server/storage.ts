@@ -67,7 +67,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async searchSpecies(query: string, page: number, limit: number, classification?: string): Promise<{ data: Species[]; total: number }> {
+  async searchSpecies(query: string, page: number, limit: number, classification?: string): Promise<{ data: (Species & { thumbnailKey?: string })[]; total: number }> {
     const offset = (page - 1) * limit;
     
     const conditions = [];
@@ -93,13 +93,40 @@ export class DatabaseStorage implements IStorage {
       .from(species)
       .where(whereClause);
 
-    const data = await db
+    const speciesData = await db
       .select()
       .from(species)
       .where(whereClause)
       .orderBy(asc(species.scientificName))
       .limit(limit)
       .offset(offset);
+
+    // Get first photo for each species
+    const speciesIds = speciesData.map(s => s.id);
+    const photoMap: Record<string, string> = {};
+    
+    if (speciesIds.length > 0) {
+      const photosResult = await db
+        .select({
+          speciesId: photos.speciesId,
+          fileKey: photos.fileKey,
+        })
+        .from(photos)
+        .where(sql`${photos.speciesId} = ANY(${speciesIds})`)
+        .orderBy(asc(photos.createdAt));
+      
+      // Take first photo for each species
+      for (const photo of photosResult) {
+        if (!photoMap[photo.speciesId]) {
+          photoMap[photo.speciesId] = photo.fileKey;
+        }
+      }
+    }
+
+    const data = speciesData.map(s => ({
+      ...s,
+      thumbnailKey: photoMap[s.id] || undefined,
+    }));
 
     return { data, total: totalResult?.count || 0 };
   }

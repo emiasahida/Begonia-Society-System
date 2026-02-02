@@ -16,8 +16,12 @@ import {
 import { Search, Leaf, ChevronLeft, ChevronRight, X, Filter } from "lucide-react";
 import type { Species } from "@shared/schema";
 
+interface SpeciesWithThumbnail extends Species {
+  thumbnailKey?: string;
+}
+
 interface SearchResponse {
-  data: Species[];
+  data: SpeciesWithThumbnail[];
   total: number;
   page: number;
   limit: number;
@@ -144,9 +148,20 @@ export default function Encyclopedia() {
                 className="flex items-start gap-4"
                 data-testid={`link-species-${species.id}`}
               >
-                <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Leaf className="w-5 h-5 text-primary" />
-                </div>
+                {species.thumbnailKey ? (
+                  <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                    <img
+                      src={`/api/files/${species.thumbnailKey}`}
+                      alt={species.scientificName}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Leaf className="w-5 h-5 text-primary" />
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
