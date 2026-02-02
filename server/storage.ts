@@ -10,7 +10,7 @@ import {
   type RejectionCode
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, or, desc, asc, sql, and, lt } from "drizzle-orm";
+import { eq, like, or, desc, asc, sql, and, lt, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Species
@@ -112,7 +112,7 @@ export class DatabaseStorage implements IStorage {
           fileKey: photos.fileKey,
         })
         .from(photos)
-        .where(sql`${photos.speciesId} = ANY(${speciesIds})`)
+        .where(inArray(photos.speciesId, speciesIds))
         .orderBy(asc(photos.createdAt));
       
       // Take first photo for each species
