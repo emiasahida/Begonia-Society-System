@@ -6,7 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Search, Leaf, ChevronLeft, ChevronRight, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Leaf, ChevronLeft, ChevronRight, X, Filter } from "lucide-react";
 import type { Species } from "@shared/schema";
 
 interface SearchResponse {
@@ -20,6 +27,7 @@ interface SearchResponse {
 export default function Encyclopedia() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [classificationFilter, setClassificationFilter] = useState("");
   const [page, setPage] = useState(1);
   const limit = 20;
 
@@ -31,11 +39,16 @@ export default function Encyclopedia() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const { data: classifications } = useQuery<string[]>({
+    queryKey: ["/api/species/classifications"],
+  });
+
   const { data, isLoading, isFetching } = useQuery<SearchResponse>({
-    queryKey: ["/api/species", { q: debouncedQuery, page, limit }],
+    queryKey: ["/api/species", { q: debouncedQuery, classification: classificationFilter, page, limit }],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (debouncedQuery) params.set("q", debouncedQuery);
+      if (classificationFilter) params.set("classification", classificationFilter);
       params.set("page", page.toString());
       params.set("limit", limit.toString());
       const res = await fetch(`/api/species?${params}`);
@@ -55,27 +68,47 @@ export default function Encyclopedia() {
         </p>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="検索キーワードを入力..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 pr-10"
-          data-testid="input-search"
-        />
-        {searchQuery && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-            onClick={() => setSearchQuery("")}
-            data-testid="button-clear-search"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        )}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="検索キーワードを入力..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10"
+            data-testid="input-search"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+              onClick={() => setSearchQuery("")}
+              data-testid="button-clear-search"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+        <Select
+          value={classificationFilter || "all"}
+          onValueChange={(val) => {
+            setClassificationFilter(val === "all" ? "" : val);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-48" data-testid="select-classification-filter">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="分類で絞り込み" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">すべての分類</SelectItem>
+            {classifications?.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {debouncedQuery && data && (
