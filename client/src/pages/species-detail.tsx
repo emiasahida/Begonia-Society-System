@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Leaf, Camera, User, Calendar, MapPin, Palette, BookOpen } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { ArrowLeft, Leaf, Camera, User, MapPin, Palette, BookOpen, X } from "lucide-react";
 import type { Species, Photo } from "@shared/schema";
 
 interface SpeciesWithPhotos extends Species {
@@ -13,6 +16,7 @@ interface SpeciesWithPhotos extends Species {
 
 export default function SpeciesDetail() {
   const { id } = useParams<{ id: string }>();
+  const [viewingPhoto, setViewingPhoto] = useState<(Photo & { memberName?: string }) | null>(null);
 
   const { data: species, isLoading } = useQuery<SpeciesWithPhotos>({
     queryKey: ["/api/species", id],
@@ -166,7 +170,9 @@ export default function SpeciesDetail() {
             {species.photos.map((photo) => (
               <div
                 key={photo.id}
-                className="aspect-square rounded-lg overflow-hidden bg-muted relative group"
+                className="aspect-square rounded-lg overflow-hidden bg-muted relative group cursor-pointer"
+                onClick={() => setViewingPhoto(photo)}
+                data-testid={`photo-${photo.id}`}
               >
                 <img
                   src={`/api/files/${photo.fileKey}`}
@@ -189,6 +195,45 @@ export default function SpeciesDetail() {
           </div>
         )}
       </Card>
+
+      <Dialog open={!!viewingPhoto} onOpenChange={() => setViewingPhoto(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <VisuallyHidden>
+            <DialogTitle>写真詳細</DialogTitle>
+          </VisuallyHidden>
+          {viewingPhoto && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 z-10 bg-black/50 text-white hover:bg-black/70"
+                onClick={() => setViewingPhoto(null)}
+                data-testid="button-close-modal"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+              <div className="bg-black flex items-center justify-center">
+                <img
+                  src={`/api/files/${viewingPhoto.fileKey}`}
+                  alt={species?.scientificName || "Begonia"}
+                  className="w-full h-auto max-h-[80vh] object-contain"
+                />
+              </div>
+              <div className="p-4 bg-background space-y-1">
+                <p className="text-sm font-medium">
+                  {species?.scientificName}
+                  {species?.japaneseName && (
+                    <span className="text-muted-foreground ml-2">({species.japaneseName})</span>
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  クレジット: {viewingPhoto.credit}
+                </p>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
