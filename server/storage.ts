@@ -191,9 +191,9 @@ export class DatabaseStorage implements IStorage {
         speciesId: photos.speciesId,
         memberId: photos.memberId,
         fileKey: photos.fileKey,
+        thumbKey: photos.thumbKey,
         credit: photos.credit,
         createdAt: photos.createdAt,
-        updatedAt: photos.updatedAt,
         speciesName: species.scientificName,
         speciesJapaneseName: species.japaneseName,
       })
@@ -206,9 +206,9 @@ export class DatabaseStorage implements IStorage {
       speciesId: r.speciesId,
       memberId: r.memberId,
       fileKey: r.fileKey,
+      thumbKey: r.thumbKey,
       credit: r.credit,
       createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
       species: r.speciesName ? { scientificName: r.speciesName, japaneseName: r.speciesJapaneseName } : undefined,
     }));
   }
