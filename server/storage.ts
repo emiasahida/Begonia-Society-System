@@ -106,10 +106,15 @@ export class DatabaseStorage implements IStorage {
 
   async getDistinctClassifications(): Promise<string[]> {
     const results = await db
-      .selectDistinct({ classification: species.classification })
+      .select({ 
+        classification: species.classification,
+        count: sql<number>`count(*)::int`
+      })
       .from(species)
       .where(sql`${species.classification} IS NOT NULL AND ${species.classification} != ''`)
-      .orderBy(asc(species.classification));
+      .groupBy(species.classification)
+      .having(sql`count(*) >= 50`)
+      .orderBy(sql`count(*) DESC`);
     
     return results.map(r => r.classification).filter((c): c is string => c !== null);
   }
