@@ -15,7 +15,8 @@ import { eq, like, or, desc, asc, sql, and, lt } from "drizzle-orm";
 export interface IStorage {
   // Species
   getSpecies(id: string): Promise<Species | undefined>;
-  searchSpecies(query: string, page: number, limit: number): Promise<{ data: Species[]; total: number }>;
+  searchSpecies(query: string, page: number, limit: number, classification?: string): Promise<{ data: Species[]; total: number }>;
+  getDistinctClassifications(): Promise<string[]>;
   getRecentSpecies(limit: number): Promise<Species[]>;
   createSpecies(data: InsertSpecies): Promise<Species>;
   updateSpecies(id: string, data: Partial<InsertSpecies>): Promise<Species | undefined>;
@@ -66,19 +67,26 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async searchSpecies(query: string, page: number, limit: number): Promise<{ data: Species[]; total: number }> {
+  async searchSpecies(query: string, page: number, limit: number, classification?: string): Promise<{ data: Species[]; total: number }> {
     const offset = (page - 1) * limit;
     
-    let whereClause;
+    const conditions = [];
+    
     if (query) {
       const searchPattern = `%${query}%`;
-      whereClause = or(
+      conditions.push(or(
         like(species.scientificName, searchPattern),
         like(species.authorName, searchPattern),
         like(species.notes, searchPattern),
         like(species.japaneseName, searchPattern)
-      );
+      ));
     }
+    
+    if (classification) {
+      conditions.push(eq(species.classification, classification));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [totalResult] = await db
       .select({ count: sql<number>`count(*)::int` })
@@ -94,6 +102,16 @@ export class DatabaseStorage implements IStorage {
       .offset(offset);
 
     return { data, total: totalResult?.count || 0 };
+  }
+
+  async getDistinctClassifications(): Promise<string[]> {
+    const results = await db
+      .selectDistinct({ classification: species.classification })
+      .from(species)
+      .where(sql`${species.classification} IS NOT NULL AND ${species.classification} != ''`)
+      .orderBy(asc(species.classification));
+    
+    return results.map(r => r.classification).filter((c): c is string => c !== null);
   }
 
   async getRecentSpecies(limit: number): Promise<Species[]> {

@@ -149,8 +149,9 @@ export async function registerRoutes(
       const q = (req.query.q as string) || "";
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const classification = (req.query.classification as string) || undefined;
       
-      const result = await storage.searchSpecies(q, page, limit);
+      const result = await storage.searchSpecies(q, page, limit, classification);
       res.json({
         ...result,
         page,
@@ -160,6 +161,16 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error searching species:", error);
       res.status(500).json({ message: "Failed to search species" });
+    }
+  });
+
+  app.get("/api/species/classifications", isAuthenticated, async (req, res) => {
+    try {
+      const classifications = await storage.getDistinctClassifications();
+      res.json(classifications);
+    } catch (error) {
+      console.error("Error fetching classifications:", error);
+      res.status(500).json({ message: "Failed to fetch classifications" });
     }
   });
 

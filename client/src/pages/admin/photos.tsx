@@ -18,6 +18,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Camera, Loader2, Image, Trash2, Search, X, Check, ChevronsUpDown } from "lucide-react";
@@ -34,6 +41,7 @@ export default function AdminPhotos() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [speciesSearchOpen, setSpeciesSearchOpen] = useState(false);
   const [speciesSearchQuery, setSpeciesSearchQuery] = useState("");
+  const [classificationFilter, setClassificationFilter] = useState("");
   const [viewingPhoto, setViewingPhoto] = useState<Photo | null>(null);
 
   const { data: photos, isLoading: photosLoading } = useQuery<Photo[]>({
@@ -44,14 +52,21 @@ export default function AdminPhotos() {
     queryKey: ["/api/admin/submissions/pending"],
   });
 
+  const { data: classifications } = useQuery<string[]>({
+    queryKey: ["/api/species/classifications"],
+  });
+
   const { data: speciesSearchResults, isLoading: speciesSearchLoading } = useQuery<{ data: Species[] }>({
-    queryKey: ["/api/species", { q: speciesSearchQuery }],
+    queryKey: ["/api/species", { q: speciesSearchQuery, classification: classificationFilter }],
     queryFn: async () => {
-      const res = await fetch(`/api/species?q=${encodeURIComponent(speciesSearchQuery)}&limit=50`);
+      const params = new URLSearchParams({ limit: "50" });
+      if (speciesSearchQuery) params.set("q", speciesSearchQuery);
+      if (classificationFilter) params.set("classification", classificationFilter);
+      const res = await fetch(`/api/species?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch species");
       return res.json();
     },
-    enabled: speciesSearchQuery.length >= 2,
+    enabled: speciesSearchQuery.length >= 2 || !!classificationFilter,
   });
 
   const uploadMutation = useMutation({
@@ -177,8 +192,22 @@ export default function AdminPhotos() {
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
-                    <div className="p-2 border-b">
+                  <PopoverContent className="w-80 p-0" align="start">
+                    <div className="p-2 border-b space-y-2">
+                      <Select
+                        value={classificationFilter || "all"}
+                        onValueChange={(val) => setClassificationFilter(val === "all" ? "" : val)}
+                      >
+                        <SelectTrigger className="h-8" data-testid="select-classification">
+                          <SelectValue placeholder="分類で絞り込み" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">すべての分類</SelectItem>
+                          {classifications?.map((c) => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <div className="flex items-center gap-2">
                         <Search className="h-4 w-4 text-muted-foreground" />
                         <Input
@@ -204,9 +233,9 @@ export default function AdminPhotos() {
                       </div>
                     </div>
                     <div className="max-h-64 overflow-y-auto">
-                      {speciesSearchQuery.length < 2 ? (
+                      {speciesSearchQuery.length < 2 && !classificationFilter ? (
                         <div className="p-4 text-sm text-muted-foreground text-center">
-                          2文字以上入力して検索
+                          分類を選択するか、2文字以上入力して検索
                         </div>
                       ) : speciesSearchLoading ? (
                         <div className="p-4 text-sm text-muted-foreground text-center">
