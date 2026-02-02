@@ -34,6 +34,7 @@ export default function AdminPhotos() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [speciesSearchOpen, setSpeciesSearchOpen] = useState(false);
   const [speciesSearchQuery, setSpeciesSearchQuery] = useState("");
+  const [viewingPhoto, setViewingPhoto] = useState<Photo | null>(null);
 
   const { data: photos, isLoading: photosLoading } = useQuery<Photo[]>({
     queryKey: ["/api/admin/photos"],
@@ -305,7 +306,9 @@ export default function AdminPhotos() {
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
+                className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
+                onClick={() => setViewingPhoto(photo)}
+                data-testid={`photo-thumbnail-${photo.id}`}
               >
                 <img
                   src={`/api/files/${photo.fileKey}`}
@@ -317,7 +320,8 @@ export default function AdminPhotos() {
                   <Button
                     variant="destructive"
                     size="icon"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       if (confirm("この写真を削除しますか？")) {
                         deleteMutation.mutate(photo.id);
                       }
@@ -340,6 +344,27 @@ export default function AdminPhotos() {
           </div>
         )}
       </div>
+
+      <Dialog open={!!viewingPhoto} onOpenChange={(open) => !open && setViewingPhoto(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          {viewingPhoto && (
+            <>
+              <div className="relative bg-black">
+                <img
+                  src={`/api/files/${viewingPhoto.fileKey}`}
+                  alt="Begonia"
+                  className="w-full h-auto max-h-[80vh] object-contain"
+                />
+              </div>
+              <div className="p-4 bg-background">
+                <p className="text-sm text-muted-foreground">
+                  クレジット: {viewingPhoto.credit}
+                </p>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
