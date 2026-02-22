@@ -13,7 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Leaf, ChevronLeft, ChevronRight, X, Filter } from "lucide-react";
+import {
+  Search,
+  Leaf,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Filter,
+} from "lucide-react";
 import type { Species } from "@shared/schema";
 
 interface SpeciesWithThumbnail extends Species {
@@ -48,11 +55,15 @@ export default function Encyclopedia() {
   });
 
   const { data, isLoading, isFetching } = useQuery<SearchResponse>({
-    queryKey: ["/api/species", { q: debouncedQuery, classification: classificationFilter, page, limit }],
+    queryKey: [
+      "/api/species",
+      { q: debouncedQuery, classification: classificationFilter, page, limit },
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (debouncedQuery) params.set("q", debouncedQuery);
-      if (classificationFilter) params.set("classification", classificationFilter);
+      if (classificationFilter)
+        params.set("classification", classificationFilter);
       params.set("page", page.toString());
       params.set("limit", limit.toString());
       const res = await fetch(`/api/species?${params}`);
@@ -68,7 +79,7 @@ export default function Encyclopedia() {
           図鑑検索
         </h1>
         <p className="text-muted-foreground">
-          学名、著者名、備考で部分一致検索ができます
+          学名、作出者名、備考で部分一致検索ができます
         </p>
       </div>
 
@@ -102,14 +113,19 @@ export default function Encyclopedia() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="w-full sm:w-48" data-testid="select-classification-filter">
+          <SelectTrigger
+            className="w-full sm:w-48"
+            data-testid="select-classification-filter"
+          >
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="分類で絞り込み" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">すべての分類</SelectItem>
             {classifications?.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -139,10 +155,7 @@ export default function Encyclopedia() {
           ))
         ) : data?.data && data.data.length > 0 ? (
           data.data.map((species) => (
-            <Card
-              key={species.id}
-              className="p-4 hover-elevate"
-            >
+            <Card key={species.id} className="p-4 hover-elevate">
               <Link
                 href={`/species/${species.id}`}
                 className="flex items-start gap-4"
@@ -175,7 +188,10 @@ export default function Encyclopedia() {
                       )}
                     </div>
                     {species.classification && (
-                      <Badge variant="secondary" className="flex-shrink-0 text-xs">
+                      <Badge
+                        variant="secondary"
+                        className="flex-shrink-0 text-xs"
+                      >
                         {species.classification}
                       </Badge>
                     )}
@@ -198,7 +214,9 @@ export default function Encyclopedia() {
           <div className="text-center py-16">
             <Leaf className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
             <h3 className="text-lg font-medium text-foreground mb-2">
-              {debouncedQuery ? "検索結果がありません" : "種が登録されていません"}
+              {debouncedQuery
+                ? "検索結果がありません"
+                : "種が登録されていません"}
             </h3>
             <p className="text-sm text-muted-foreground">
               {debouncedQuery

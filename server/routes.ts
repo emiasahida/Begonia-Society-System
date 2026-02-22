@@ -152,8 +152,11 @@ export async function registerRoutes(
       const classification = (req.query.classification as string) || undefined;
       
       const result = await storage.searchSpecies(q, page, limit, classification);
+      const isAdmin = (req as any).member?.role === "admin";
+      const data = isAdmin ? result.data : result.data.map(({ adminComment, ...rest }: any) => rest);
       res.json({
-        ...result,
+        data,
+        total: result.total,
         page,
         limit,
         totalPages: Math.ceil(result.total / limit),
@@ -192,7 +195,11 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Species not found" });
       }
       const photos = await storage.getPhotosBySpeciesId(req.params.id);
-      res.json({ ...species, photos });
+      const result: any = { ...species, photos };
+      if ((req as any).member?.role !== "admin") {
+        delete result.adminComment;
+      }
+      res.json(result);
     } catch (error) {
       console.error("Error fetching species:", error);
       res.status(500).json({ message: "Failed to fetch species" });

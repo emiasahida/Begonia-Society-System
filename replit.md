@@ -6,7 +6,7 @@
 
 ## 主要機能
 
-- **種マスター管理**: 学名、著者名、分類、花色、産地等のベゴニア種データの登録・検索・閲覧
+- **種マスター管理**: 学名、作出者名、分類、花色、産地等のベゴニア種データの登録・検索・閲覧
 - **会員ログイン**: Replit Auth による認証
 - **ロール別権限制御**: member（会員）、admin（管理者）、reviewer（理事）
 - **写真管理**: 協会運営による写真の登録・公開（会員限定配信）
@@ -83,7 +83,7 @@ Replit Auth で自動作成されるユーザー情報
 |--------|------|------|
 | id | varchar | 主キー |
 | scientificName | text | 学名 |
-| authorName | text | 著者名 |
+| authorName | text | 作出者名 |
 | classification | text | 分類 |
 | flowerColor | text | 花色 |
 | origin | text | 産地・出典 |

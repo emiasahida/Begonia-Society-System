@@ -1,14 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { BookOpen, Search, Shield, Camera, Users, Leaf, ArrowRight } from "lucide-react";
+import {
+  BookOpen,
+  Search,
+  Shield,
+  Camera,
+  Users,
+  Leaf,
+  ArrowRight,
+} from "lucide-react";
 
 export default function Landing() {
   const features = [
     {
       icon: Search,
       title: "包括的な検索",
-      description: "約2万件のベゴニア種を学名、著者名、備考で検索できます",
+      description: "約2万件のベゴニア種を学名、作出者名、備考で検索できます",
     },
     {
       icon: Camera,
@@ -59,10 +67,15 @@ export default function Landing() {
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
                 約2万種のベゴニアデータを収録した会員専用の図鑑システムです。
-                学名や著者名で検索し、会員撮影の写真とともに種の詳細をご覧いただけます。
+                学名や作出者名で検索し、会員撮影の写真とともに種の詳細をご覧いただけます。
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button size="lg" asChild className="gap-2" data-testid="button-login-hero">
+                <Button
+                  size="lg"
+                  asChild
+                  className="gap-2"
+                  data-testid="button-login-hero"
+                >
                   <a href="/api/login">
                     ログインして図鑑を見る
                     <ArrowRight className="w-4 h-4" />
@@ -117,7 +130,7 @@ export default function Landing() {
               </h2>
               <p className="text-muted-foreground mb-8 leading-relaxed">
                 世界中のベゴニア品種データを網羅した、日本最大級の
-                ベゴニア図鑑データベースです。学名、著者名、分類、
+                ベゴニア図鑑データベースです。学名、作出者名、分類、
                 花色、産地などの詳細情報をご覧いただけます。
               </p>
               <div className="flex items-center justify-center gap-8 text-center">
@@ -132,7 +145,9 @@ export default function Landing() {
                 </div>
                 <div className="w-px h-12 bg-border" />
                 <div>
-                  <div className="text-3xl font-bold text-primary">世界各地</div>
+                  <div className="text-3xl font-bold text-primary">
+                    世界各地
+                  </div>
                   <div className="text-sm text-muted-foreground">産地</div>
                 </div>
               </div>
@@ -149,7 +164,8 @@ export default function Landing() {
               <span>Japan Begonia Society</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} 日本ベゴニア協会. All rights reserved.
+              © {new Date().getFullYear()} 日本ベゴニア協会. All rights
+              reserved.
             </p>
           </div>
         </div>

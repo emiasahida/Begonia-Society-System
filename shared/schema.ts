@@ -66,6 +66,7 @@ export const species = pgTable("species", {
   flowerColor: text("flower_color"),
   origin: text("origin"),
   japaneseName: text("japanese_name"),
+  adminComment: text("admin_comment"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

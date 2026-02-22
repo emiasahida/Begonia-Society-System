@@ -18,7 +18,17 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Upload, Plus, Search, Leaf, Pencil, Trash2, X, FileUp, Loader2 } from "lucide-react";
+import {
+  Upload,
+  Plus,
+  Search,
+  Leaf,
+  Pencil,
+  Trash2,
+  X,
+  FileUp,
+  Loader2,
+} from "lucide-react";
 import type { Species, InsertSpecies } from "@shared/schema";
 
 interface SearchResponse {
@@ -33,7 +43,7 @@ export default function AdminSpecies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [editingSpecies, setEditingSpecies] = useState<Species | null>(null);
@@ -63,12 +73,22 @@ export default function AdminSpecies() {
       toast({ title: "種を追加しました" });
     },
     onError: () => {
-      toast({ title: "エラー", description: "種の追加に失敗しました", variant: "destructive" });
+      toast({
+        title: "エラー",
+        description: "種の追加に失敗しました",
+        variant: "destructive",
+      });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertSpecies> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<InsertSpecies>;
+    }) => {
       return apiRequest("PATCH", `/api/admin/species/${id}`, data);
     },
     onSuccess: () => {
@@ -77,7 +97,11 @@ export default function AdminSpecies() {
       toast({ title: "種を更新しました" });
     },
     onError: () => {
-      toast({ title: "エラー", description: "種の更新に失敗しました", variant: "destructive" });
+      toast({
+        title: "エラー",
+        description: "種の更新に失敗しました",
+        variant: "destructive",
+      });
     },
   });
 
@@ -90,7 +114,11 @@ export default function AdminSpecies() {
       toast({ title: "種を削除しました" });
     },
     onError: () => {
-      toast({ title: "エラー", description: "種の削除に失敗しました", variant: "destructive" });
+      toast({
+        title: "エラー",
+        description: "種の削除に失敗しました",
+        variant: "destructive",
+      });
     },
   });
 
@@ -108,10 +136,17 @@ export default function AdminSpecies() {
     onSuccess: (data: { imported: number }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/species"] });
       setIsImportDialogOpen(false);
-      toast({ title: "インポート完了", description: `${data.imported} 件の種をインポートしました` });
+      toast({
+        title: "インポート完了",
+        description: `${data.imported} 件の種をインポートしました`,
+      });
     },
     onError: () => {
-      toast({ title: "エラー", description: "CSVインポートに失敗しました", variant: "destructive" });
+      toast({
+        title: "エラー",
+        description: "CSVインポートに失敗しました",
+        variant: "destructive",
+      });
     },
   });
 
@@ -134,7 +169,10 @@ export default function AdminSpecies() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+          <Dialog
+            open={isImportDialogOpen}
+            onOpenChange={setIsImportDialogOpen}
+          >
             <DialogTrigger asChild>
               <Button variant="outline" data-testid="button-import">
                 <FileUp className="w-4 h-4 mr-2" />
@@ -269,12 +307,17 @@ export default function AdminSpecies() {
         )}
       </div>
 
-      <Dialog open={!!editingSpecies} onOpenChange={(open) => !open && setEditingSpecies(null)}>
+      <Dialog
+        open={!!editingSpecies}
+        onOpenChange={(open) => !open && setEditingSpecies(null)}
+      >
         <DialogContent>
           {editingSpecies && (
             <SpeciesForm
               species={editingSpecies}
-              onSubmit={(data) => updateMutation.mutate({ id: editingSpecies.id, data })}
+              onSubmit={(data) =>
+                updateMutation.mutate({ id: editingSpecies.id, data })
+              }
               isPending={updateMutation.isPending}
               onCancel={() => setEditingSpecies(null)}
             />
@@ -292,7 +335,12 @@ interface SpeciesFormProps {
   onCancel: () => void;
 }
 
-function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProps) {
+function SpeciesForm({
+  species,
+  onSubmit,
+  isPending,
+  onCancel,
+}: SpeciesFormProps) {
   const [formData, setFormData] = useState<InsertSpecies>({
     scientificName: species?.scientificName || "",
     authorName: species?.authorName || "",
@@ -301,6 +349,7 @@ function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProp
     origin: species?.origin || "",
     japaneseName: species?.japaneseName || "",
     notes: species?.notes || "",
+    adminComment: species?.adminComment || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -319,17 +368,21 @@ function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProp
           <Input
             id="scientificName"
             value={formData.scientificName}
-            onChange={(e) => setFormData({ ...formData, scientificName: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, scientificName: e.target.value })
+            }
             required
             data-testid="input-scientific-name"
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="authorName">著者名</Label>
+          <Label htmlFor="authorName">作出者名</Label>
           <Input
             id="authorName"
             value={formData.authorName || ""}
-            onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, authorName: e.target.value })
+            }
             data-testid="input-author-name"
           />
         </div>
@@ -339,7 +392,9 @@ function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProp
             <Input
               id="classification"
               value={formData.classification || ""}
-              onChange={(e) => setFormData({ ...formData, classification: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, classification: e.target.value })
+              }
               data-testid="input-classification"
             />
           </div>
@@ -348,7 +403,9 @@ function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProp
             <Input
               id="flowerColor"
               value={formData.flowerColor || ""}
-              onChange={(e) => setFormData({ ...formData, flowerColor: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, flowerColor: e.target.value })
+              }
               data-testid="input-flower-color"
             />
           </div>
@@ -358,7 +415,9 @@ function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProp
           <Input
             id="origin"
             value={formData.origin || ""}
-            onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, origin: e.target.value })
+            }
             data-testid="input-origin"
           />
         </div>
@@ -367,7 +426,9 @@ function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProp
           <Input
             id="japaneseName"
             value={formData.japaneseName || ""}
-            onChange={(e) => setFormData({ ...formData, japaneseName: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, japaneseName: e.target.value })
+            }
             data-testid="input-japanese-name"
           />
         </div>
@@ -376,9 +437,24 @@ function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProp
           <Textarea
             id="notes"
             value={formData.notes || ""}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, notes: e.target.value })
+            }
             rows={3}
             data-testid="input-notes"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="adminComment">管理者コメント</Label>
+          <Textarea
+            id="adminComment"
+            value={formData.adminComment || ""}
+            onChange={(e) =>
+              setFormData({ ...formData, adminComment: e.target.value })
+            }
+            placeholder="管理者のみ閲覧可能なメモ"
+            rows={3}
+            data-testid="input-admin-comment"
           />
         </div>
       </div>
@@ -386,8 +462,18 @@ function SpeciesForm({ species, onSubmit, isPending, onCancel }: SpeciesFormProp
         <Button type="button" variant="outline" onClick={onCancel}>
           キャンセル
         </Button>
-        <Button type="submit" disabled={isPending} data-testid="button-submit-species">
-          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : species ? "更新" : "追加"}
+        <Button
+          type="submit"
+          disabled={isPending}
+          data-testid="button-submit-species"
+        >
+          {isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : species ? (
+            "更新"
+          ) : (
+            "追加"
+          )}
         </Button>
       </DialogFooter>
     </form>

@@ -3,7 +3,14 @@ import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, BookOpen, Camera, ArrowRight, Leaf, TrendingUp } from "lucide-react";
+import {
+  Search,
+  BookOpen,
+  Camera,
+  ArrowRight,
+  Leaf,
+  TrendingUp,
+} from "lucide-react";
 import type { Species } from "@shared/schema";
 
 export default function Home() {
@@ -14,9 +21,11 @@ export default function Home() {
     queryKey: ["/api/stats"],
   });
 
-  const { data: recentSpecies, isLoading: recentLoading } = useQuery<Species[]>({
-    queryKey: ["/api/species/recent"],
-  });
+  const { data: recentSpecies, isLoading: recentLoading } = useQuery<Species[]>(
+    {
+      queryKey: ["/api/species/recent"],
+    },
+  );
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8">
@@ -24,9 +33,7 @@ export default function Home() {
         <h1 className="text-2xl font-serif font-bold text-foreground">
           図鑑ホーム
         </h1>
-        <p className="text-muted-foreground">
-          ベゴニア図鑑システムへようこそ
-        </p>
+        <p className="text-muted-foreground">ベゴニア図鑑システムへようこそ</p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -70,9 +77,7 @@ export default function Home() {
           <div className="flex items-center justify-between h-full">
             <div>
               <p className="text-sm text-muted-foreground mb-1">クイック検索</p>
-              <p className="text-sm text-foreground">
-                学名・著者名で検索
-              </p>
+              <p className="text-sm text-foreground">学名・作出者名で検索</p>
             </div>
             <Button asChild size="icon" data-testid="button-quick-search">
               <Link href="/encyclopedia">
@@ -153,7 +158,7 @@ export default function Home() {
               <div>
                 <p className="text-sm font-medium text-foreground">種を検索</p>
                 <p className="text-xs text-muted-foreground">
-                  学名、著者名、備考で部分一致検索ができます
+                  学名、作出者名、備考で部分一致検索ができます
                 </p>
               </div>
             </div>
@@ -162,7 +167,9 @@ export default function Home() {
                 2
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">詳細を閲覧</p>
+                <p className="text-sm font-medium text-foreground">
+                  詳細を閲覧
+                </p>
                 <p className="text-xs text-muted-foreground">
                   種の詳細情報と会員撮影の写真を確認できます
                 </p>
@@ -173,7 +180,9 @@ export default function Home() {
                 3
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">写真を楽しむ</p>
+                <p className="text-sm font-medium text-foreground">
+                  写真を楽しむ
+                </p>
                 <p className="text-xs text-muted-foreground">
                   美しいベゴニアの写真ギャラリーをお楽しみください
                 </p>
@@ -181,7 +190,11 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-6">
-            <Button asChild className="w-full" data-testid="button-start-search">
+            <Button
+              asChild
+              className="w-full"
+              data-testid="button-start-search"
+            >
               <Link href="/encyclopedia" className="gap-2">
                 <Search className="w-4 h-4" />
                 図鑑を検索する

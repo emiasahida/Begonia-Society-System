@@ -7,8 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { ArrowLeft, Leaf, Camera, User, MapPin, Palette, BookOpen, X } from "lucide-react";
-import type { Species, Photo } from "@shared/schema";
+import {
+  ArrowLeft,
+  Leaf,
+  Camera,
+  User,
+  MapPin,
+  Palette,
+  BookOpen,
+  MessageSquare,
+  X,
+} from "lucide-react";
+import type { Species, Photo, Member } from "@shared/schema";
 
 interface SpeciesWithPhotos extends Species {
   photos: (Photo & { memberName?: string })[];
@@ -16,7 +26,13 @@ interface SpeciesWithPhotos extends Species {
 
 export default function SpeciesDetail() {
   const { id } = useParams<{ id: string }>();
-  const [viewingPhoto, setViewingPhoto] = useState<(Photo & { memberName?: string }) | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<
+    (Photo & { memberName?: string }) | null
+  >(null);
+
+  const { data: member } = useQuery<Member>({
+    queryKey: ["/api/me"],
+  });
 
   const { data: species, isLoading } = useQuery<SpeciesWithPhotos>({
     queryKey: ["/api/species", id],
@@ -103,7 +119,7 @@ export default function SpeciesDetail() {
               <div className="flex items-start gap-3">
                 <User className="w-4 h-4 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="text-xs text-muted-foreground">著者名</p>
+                  <p className="text-xs text-muted-foreground">作出者名</p>
                   <p className="text-sm font-medium text-foreground">
                     {species.authorName}
                   </p>
@@ -154,6 +170,18 @@ export default function SpeciesDetail() {
           </div>
         )}
       </Card>
+
+      {member?.role === "admin" && species.adminComment && (
+        <Card className="p-6 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+          <h2 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            管理者コメント
+          </h2>
+          <p className="text-sm text-foreground whitespace-pre-wrap" data-testid="text-admin-comment">
+            {species.adminComment}
+          </p>
+        </Card>
+      )}
 
       <Card className="p-6">
         <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -223,7 +251,9 @@ export default function SpeciesDetail() {
                 <p className="text-sm font-medium">
                   {species?.scientificName}
                   {species?.japaneseName && (
-                    <span className="text-muted-foreground ml-2">({species.japaneseName})</span>
+                    <span className="text-muted-foreground ml-2">
+                      ({species.japaneseName})
+                    </span>
                   )}
                 </p>
                 <p className="text-sm text-muted-foreground">
