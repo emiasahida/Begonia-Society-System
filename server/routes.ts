@@ -6,6 +6,7 @@ import multer from "multer";
 import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
+import sharp from "sharp";
 import { insertSpeciesSchema, insertMemberSchema, type RejectionCode, type UserRole } from "@shared/schema";
 import { z } from "zod";
 
@@ -409,10 +410,27 @@ export async function registerRoutes(
       }
       const { speciesId, credit } = validationResult.data;
 
-      // Move file to uploads directory (use copy+unlink for cross-device compatibility)
-      const fileKey = `${randomUUID()}-${req.file.originalname}`;
+      const uuid = randomUUID();
+      const ext = ".jpg";
+      const fileKey = `${uuid}${ext}`;
+      const thumbKey = `${uuid}_thumb${ext}`;
       const destPath = path.join(UPLOADS_DIR, fileKey);
-      fs.copyFileSync(req.file.path, destPath);
+      const thumbPath = path.join(UPLOADS_DIR, thumbKey);
+
+      const srcBuffer = fs.readFileSync(req.file.path);
+
+      await sharp(srcBuffer)
+        .rotate()
+        .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 85, progressive: true })
+        .toFile(destPath);
+
+      await sharp(srcBuffer)
+        .rotate()
+        .resize({ width: 400, height: 400, fit: "cover", position: "centre" })
+        .jpeg({ quality: 80 })
+        .toFile(thumbPath);
+
       fs.unlinkSync(req.file.path);
 
       const memberId = (req as any).member.id;
@@ -423,6 +441,7 @@ export async function registerRoutes(
           speciesId,
           memberId,
           fileKey,
+          thumbKey,
           credit,
         });
         await storage.createAuditLog({
@@ -438,6 +457,7 @@ export async function registerRoutes(
         const submission = await storage.createSubmission({
           memberId,
           fileKey,
+          thumbKey,
           credit,
           termsVersion: terms?.version || "v1.0",
           termsAcceptedAt: new Date(),

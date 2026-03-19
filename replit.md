@@ -20,6 +20,7 @@
 - **Database**: PostgreSQL (Drizzle ORM)
 - **Authentication**: Replit Auth (OpenID Connect)
 - **Routing**: wouter (frontend), Express (backend)
+- **画像処理**: sharp（EXIF自動回転・リサイズ・サムネイル生成）
 
 ## プロジェクト構造
 
