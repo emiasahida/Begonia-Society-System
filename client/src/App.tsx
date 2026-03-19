@@ -17,8 +17,10 @@ import SpeciesDetail from "@/pages/species-detail";
 import AdminSpecies from "@/pages/admin/species";
 import AdminMembers from "@/pages/admin/members";
 import AdminPhotos from "@/pages/admin/photos";
+import AdminInvitations from "@/pages/admin/invitations";
 import Review from "@/pages/review";
 import Pending from "@/pages/pending";
+import InvitePage from "@/pages/invite";
 import NotFound from "@/pages/not-found";
 import type { Member } from "@shared/schema";
 
@@ -30,6 +32,11 @@ function AuthenticatedApp() {
     queryKey: ["/api/me"],
     enabled: !!user,
   });
+
+  // Invite pages are accessible without full auth
+  if (location.startsWith("/invite/")) {
+    return <Switch><Route path="/invite/:token" component={InvitePage} /></Switch>;
+  }
 
   if (authLoading) {
     return (
@@ -97,6 +104,7 @@ function AuthenticatedApp() {
                   <Route path="/admin/species" component={AdminSpecies} />
                   <Route path="/admin/members" component={AdminMembers} />
                   <Route path="/admin/photos" component={AdminPhotos} />
+                  <Route path="/admin/invitations" component={AdminInvitations} />
                 </>
               )}
               

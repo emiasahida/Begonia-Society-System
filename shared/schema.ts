@@ -157,6 +157,29 @@ export type InsertPhotoSubmission = z.infer<typeof insertPhotoSubmissionSchema>;
 export type PhotoSubmission = typeof photoSubmissions.$inferSelect;
 
 // ========================================
+// Invitations Table
+// ========================================
+export const invitations = pgTable("invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  token: varchar("token").notNull().unique(),
+  createdBy: varchar("created_by").references(() => members.id).notNull(),
+  note: varchar("note"),
+  expiresAt: timestamp("expires_at"),
+  usedAt: timestamp("used_at"),
+  usedByMemberId: varchar("used_by_member_id").references(() => members.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertInvitationSchema = createInsertSchema(invitations).omit({
+  id: true,
+  usedAt: true,
+  usedByMemberId: true,
+  createdAt: true,
+});
+export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
+export type Invitation = typeof invitations.$inferSelect;
+
+// ========================================
 // Audit Logs Table
 // ========================================
 export const auditLogs = pgTable("audit_logs", {

@@ -104,6 +104,10 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req.hostname);
+    // Support redirectTo query param for post-login redirect
+    if (req.query.redirectTo && typeof req.query.redirectTo === "string") {
+      (req.session as any).returnTo = req.query.redirectTo;
+    }
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],

@@ -7,13 +7,12 @@ import {
   BookOpen, 
   Search, 
   Users, 
-  Settings, 
   ClipboardCheck,
   Image,
-  FileText,
   Home,
   LogOut,
-  Pencil
+  Pencil,
+  Link2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -110,6 +109,7 @@ export function AppSidebar({ member }: AppSidebarProps) {
     { title: "種マスター管理", url: "/admin/species", icon: BookOpen },
     { title: "会員管理", url: "/admin/members", icon: Users },
     { title: "写真管理", url: "/admin/photos", icon: Image },
+    { title: "招待URL管理", url: "/admin/invitations", icon: Link2 },
   ];
 
   const reviewerItems = [

@@ -607,6 +607,135 @@ export async function registerRoutes(
     }
   });
 
+  // ===== Invitation API =====
+
+  // Admin: list all invitations
+  app.get("/api/admin/invitations", isAuthenticated, requireRole("admin"), async (req, res) => {
+    try {
+      const all = await storage.getInvitations();
+      res.json(all);
+    } catch (error) {
+      console.error("Error fetching invitations:", error);
+      res.status(500).json({ message: "Failed to fetch invitations" });
+    }
+  });
+
+  // Admin: create invitation
+  app.post("/api/admin/invitations", isAuthenticated, requireRole("admin"), async (req, res) => {
+    try {
+      const { note, expiresAt } = req.body;
+      const token = randomUUID();
+      const invitation = await storage.createInvitation({
+        token,
+        createdBy: (req as any).member.id,
+        note: note || null,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      });
+      await storage.createAuditLog({
+        action: "invitation.create",
+        entityType: "invitation",
+        entityId: invitation.id,
+        performedBy: (req as any).member.id,
+        details: { note },
+      });
+      res.status(201).json(invitation);
+    } catch (error) {
+      console.error("Error creating invitation:", error);
+      res.status(500).json({ message: "Failed to create invitation" });
+    }
+  });
+
+  // Admin: delete/revoke invitation
+  app.delete("/api/admin/invitations/:id", isAuthenticated, requireRole("admin"), async (req, res) => {
+    try {
+      await storage.deleteInvitation(req.params.id);
+      await storage.createAuditLog({
+        action: "invitation.delete",
+        entityType: "invitation",
+        entityId: req.params.id,
+        performedBy: (req as any).member.id,
+      });
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting invitation:", error);
+      res.status(500).json({ message: "Failed to delete invitation" });
+    }
+  });
+
+  // Public: validate invitation token (no auth needed - shows invitation info)
+  app.get("/api/invite/:token", async (req, res) => {
+    try {
+      const inv = await storage.getInvitationByToken(req.params.token);
+      if (!inv) {
+        return res.status(404).json({ message: "招待URLが見つかりません" });
+      }
+      if (inv.usedAt) {
+        return res.status(410).json({ message: "この招待URLは既に使用済みです" });
+      }
+      if (inv.expiresAt && inv.expiresAt < new Date()) {
+        return res.status(410).json({ message: "この招待URLの有効期限が切れています" });
+      }
+      res.json({ valid: true, note: inv.note });
+    } catch (error) {
+      console.error("Error validating invitation:", error);
+      res.status(500).json({ message: "Failed to validate invitation" });
+    }
+  });
+
+  // Auth required: accept invitation and register as member
+  app.post("/api/invite/:token/accept", isAuthenticated, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user?.claims?.sub) {
+        return res.status(401).json({ message: "認証が必要です" });
+      }
+
+      // Check if already a member
+      const existingMember = await storage.getMemberByUserId(user.claims.sub);
+      if (existingMember) {
+        return res.status(409).json({ message: "既に会員登録済みです" });
+      }
+
+      const inv = await storage.getInvitationByToken(req.params.token);
+      if (!inv) {
+        return res.status(404).json({ message: "招待URLが見つかりません" });
+      }
+      if (inv.usedAt) {
+        return res.status(410).json({ message: "この招待URLは既に使用済みです" });
+      }
+      if (inv.expiresAt && inv.expiresAt < new Date()) {
+        return res.status(410).json({ message: "この招待URLの有効期限が切れています" });
+      }
+
+      const { displayName } = req.body;
+      if (!displayName || typeof displayName !== "string" || displayName.trim().length === 0) {
+        return res.status(400).json({ message: "表示名を入力してください" });
+      }
+
+      const member = await storage.createMember({
+        userId: user.claims.sub,
+        displayName: displayName.trim(),
+        role: "member",
+        status: "active",
+      });
+
+      await storage.useInvitation(req.params.token, member.id);
+
+      await storage.createAuditLog({
+        action: "invitation.accept",
+        entityType: "invitation",
+        entityId: inv.id,
+        performedBy: member.id,
+        details: { displayName: member.displayName },
+      });
+
+      res.status(201).json(member);
+    } catch (error) {
+      console.error("Error accepting invitation:", error);
+      res.status(500).json({ message: "Failed to accept invitation" });
+    }
+  });
+
   // ===== File Serving API =====
   app.get("/api/files/:key", isAuthenticated, async (req, res) => {
     try {

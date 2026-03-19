@@ -1,5 +1,5 @@
 import {
-  species, members, photos, photoSubmissions, auditLogs, termsVersions, featureFlags,
+  species, members, photos, photoSubmissions, auditLogs, termsVersions, featureFlags, invitations,
   type Species, type InsertSpecies,
   type Member, type InsertMember,
   type Photo, type InsertPhoto,
@@ -7,6 +7,7 @@ import {
   type AuditLog, type InsertAuditLog,
   type TermsVersion, type InsertTermsVersion,
   type FeatureFlag, type InsertFeatureFlag,
+  type Invitation, type InsertInvitation,
   type RejectionCode
 } from "@shared/schema";
 import { db } from "./db";
@@ -55,6 +56,13 @@ export interface IStorage {
   // Feature Flags
   getFeatureFlag(key: string): Promise<FeatureFlag | undefined>;
   setFeatureFlag(key: string, enabled: boolean): Promise<FeatureFlag>;
+
+  // Invitations
+  getInvitations(): Promise<Invitation[]>;
+  getInvitationByToken(token: string): Promise<Invitation | undefined>;
+  createInvitation(data: InsertInvitation): Promise<Invitation>;
+  useInvitation(token: string, memberId: string): Promise<Invitation | undefined>;
+  deleteInvitation(id: string): Promise<boolean>;
 
   // Stats
   getStats(): Promise<{ totalSpecies: number; totalPhotos: number }>;
@@ -375,6 +383,35 @@ export class DatabaseStorage implements IStorage {
     }
     const [result] = await db.insert(featureFlags).values({ key, enabled }).returning();
     return result;
+  }
+
+  // Invitations
+  async getInvitations(): Promise<Invitation[]> {
+    return db.select().from(invitations).orderBy(desc(invitations.createdAt));
+  }
+
+  async getInvitationByToken(token: string): Promise<Invitation | undefined> {
+    const [result] = await db.select().from(invitations).where(eq(invitations.token, token));
+    return result;
+  }
+
+  async createInvitation(data: InsertInvitation): Promise<Invitation> {
+    const [result] = await db.insert(invitations).values(data).returning();
+    return result;
+  }
+
+  async useInvitation(token: string, memberId: string): Promise<Invitation | undefined> {
+    const [result] = await db
+      .update(invitations)
+      .set({ usedAt: new Date(), usedByMemberId: memberId })
+      .where(eq(invitations.token, token))
+      .returning();
+    return result;
+  }
+
+  async deleteInvitation(id: string): Promise<boolean> {
+    const result = await db.delete(invitations).where(eq(invitations.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Stats
