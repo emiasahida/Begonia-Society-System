@@ -161,11 +161,10 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Leaf className="w-4 h-4" />
-              <span>Japan Begonia Society</span>
+              <span>日本ベゴニア協会</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} 日本ベゴニア協会. All rights
-              reserved.
+              © {new Date().getFullYear()} 日本ベゴニア協会. 無断転載禁止。
             </p>
           </div>
         </div>
